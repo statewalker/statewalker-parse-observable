@@ -9,9 +9,10 @@ Code processing works in two steps. At first step ("parsing") text code is trans
 
 ```js
 
-import { parse, tree } from "@statewalker/parse-observable";
+import { parse } from "@statewalker/parse-observable";
 
-const cells = [
+// Cells sources
+const sources = [
   `message = "Hello, world!"`,
   `element = {
       const div = document.createElement("div");
@@ -20,44 +21,50 @@ const cells = [
    }`
 ]
 
-// Listener is used to notify about individual cells
-const listener = new tree.CodeTreeBuilder();
+// Get a list of all cell javascript sources
+const cells = parse(sources);
 
-// Parse cells and notify about individual cells.
-parse.parseObservableCell(test.source, listener);
-
-// Get the module containing all cells
-const module = listener.result;
-
-// Now this module can be serialized and/or used to compile cells code
-
+// Output:
+[
+  {
+    "type": "cell",
+    "name": "message",
+    "references": [],
+    "code": 'function message() {\nreturn ("Hello, world!");\n}',
+  },
+  {
+    "type": "cell",
+    "name": "element",
+    "references": [ "message" ],
+    "code":
+      `function element(message) {
+      const div = document.createElement("div");
+      div.innerHTML = message;
+      return div;
+      }`,
+  },
+]
 ```
 
 ## Second Stage: Compilation
 
 
 ```js
-
-import { parse, compile } from "@statewalker/parse-observable";
-import CompilingListener from "../src/compile/CompilingListener.js";
+import { parse, newCompiler } from "@statewalker/parse-observable";
 import { Runtime } from "@observablehq/runtime";
 
-// Create an ObservableHQ Runtime instance.
-// It will control the behaviour and dependencies between cells.
-const runtime = new Runtime();
-
-const observer = () => true; // Just to be sure that all cells are evaluated
-const listener = new CompilingListener({
-  runtime,
-  observer,
+const cells = parse([
+  `mutable myA = 'aa'`,
+  `{ mutable myA = 'Hello, world!' }`,
+]);
+const compile = newCompiler({
+  resolve: () => {},
+  runtime: new Runtime(),
+  observer: () => true, // Just to be sure that all cells are evaluated
 });
-
-// Parse the  module or deserialize it. See the previous step.
-const module = ...; 
-
-// Execute the module and get the content of the "element" cell
-const compiled = await listener.finalize(() => {});
-const div = await compiled.value("element");
-document.appendChild(div);
+const compiled = await compile(cells);
+const value = await compiled.value("myA");
+console.log(value);
+// Output: "Hello, world!"
 
 ```

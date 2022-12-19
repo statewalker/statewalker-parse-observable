@@ -1,2 +1,2 @@
-import './parseObservableCellTest.js'
-import './compileModuleTest.js'
+import './parseTest.js'
+import './compileTest.js'
