@@ -1,0 +1,53 @@
+{
+  "name": "@statewalker/parse-observable",
+  "version": "0.0.1",
+  "description": "Parser for ObservableHQ interactive cells",
+  "keywords": [],
+  "homepage": "https://github.com/statewalker/statewalker-parse-observable",
+  "author": {
+    "name": "Mikhail Kotelnikov",
+    "email": "mikhail.kotelnikov@gmail.com"
+  },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist/**/package.json",
+    "dist/**/*.js",
+    "src/**/*.js",
+    "index.js"
+  ],
+  "module": "src/index.js",
+  "main": "src/index.js",
+  "jsdelivr": "dist/index.js",
+  "unpkg": "dist/index.js",
+  "exports": {
+    "umd": "./dist/index-umd.min.js",
+    "default": "./src/index.js"
+  },
+  "dependencies": {
+    "@observablehq/parser": "^6.0",
+    "acorn-walk": "^8.2.0"
+  },
+  "devDependencies": {
+    "@observablehq/runtime": "^5.3.1",
+    "@statewalker/rollup": "^0.1.6",
+    "eslint": "^8",
+    "expect.js": "^0.3",
+    "mocha": "^10",
+    "rollup": "^3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:statewalker/statewalker-parse-observable.git"
+  },
+  "scripts": {
+    "eslint": "eslint src",
+    "rollup": "rollup -c",
+    "test": "mocha -R spec ./test/index.js && yarn eslint",
+    "prepublishOnly": "rm -rf dist && yarn test && yarn rollup"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
