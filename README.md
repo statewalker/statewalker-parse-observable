@@ -7,8 +7,8 @@ Code processing works in two steps. At first step ("parsing") text code is trans
 
 Methods defined in this module:
 
-* `parse(code, options)` - parses individual ObservableHQ cells and returns a list of sources for JavaScript functions with associated information (name, dependencies etc); this list can be easily serialized and used later without access to the Observable parser 
-* `newCompiler(cells,call)` - returns a function transforming compiled code to an ObservableHQ runtime module
+* `parse(code, options)` - parses individual ObservableHQ cells and returns a list of sources for JavaScript functions with associated information (name, dependencies etc); this list can be easily serialized and used later without access to the Observable parser
+* `newCompiler(cells,call)` - returns a function transforming compiled code to an ObservableHQ runtime module
 
 ## `parse(code, options)`
 
@@ -80,7 +80,7 @@ const cells = parse(sources);
 ]
 ```
 
-## `newCompiler(options) / compile(cells, call)`
+## `newCompiler(options) / compile(cells, call)`
 
 Returns a new async function compiling cells to ObservableHQ runtime modules.
 

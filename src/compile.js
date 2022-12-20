@@ -28,6 +28,7 @@ export function newCompiler({ resolve, runtime, module, observer }) {
           method : m,
           args,
           cell,
+          variable,
           module,
           runtime
         }));
