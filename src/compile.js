@@ -1,6 +1,6 @@
 export function newCompiler({ resolve, runtime, module, observer }) {
   module = module || runtime.module();
-  return async (cells, context) => {
+  return async (cells, call = ({ method, args }) => method.apply(null, args)) => {
     const imports = [];
     for await (let cell of cells) {
       if (cell.type === "import") {
@@ -23,8 +23,14 @@ export function newCompiler({ resolve, runtime, module, observer }) {
         let m = typeof code === "string"
           ? new Function([], `"use strict"\nreturn (${code})`)()
           : code;
-        if (context) m = m.bind(context);
-        module.variable(observer(name)).define(name, references, m);
+        const variable = module.variable(observer(name));
+        variable.define(name, references, (...args) => call({
+          method : m,
+          args,
+          cell,
+          module,
+          runtime
+        }));
       }
     }
     for (const imp of imports) {

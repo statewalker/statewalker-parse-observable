@@ -31,7 +31,7 @@ describe("compileModule", () => {
     });
 
     const context = { message : "World" }
-    const compiled = await compile(cells, context);
+    const compiled = await compile(cells, ({ method, args }) => method.call(context, args));
     expect(typeof compiled).to.be("object");
     const value = await compiled.value("mycell");
     expect(value).to.eql({
@@ -58,7 +58,7 @@ describe("compileModule", () => {
     });
 
     const context = { message : "ABC" }
-    const compiled = await compile(cells, context);
+    const compiled = await compile(cells, ({ method, args }) => method.call(context, args));
     expect(typeof compiled).to.be("object");
     const value = await compiled.value("mycell");
     expect(value).to.eql({
