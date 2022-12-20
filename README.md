@@ -35,6 +35,7 @@ Very often the `name` and `alias` are the same which means that cells in the loc
 
 
 `cell` items have the following fields:
+* `type="cell"`
 * `name` - name of the cell (variable); example: `viewof ${name}`
 * `references` - list of variables used in this cells; these variables should be provided by the runtime; it could be other cells from this notebook or global variables
 * `code` - plain compiled javascript
