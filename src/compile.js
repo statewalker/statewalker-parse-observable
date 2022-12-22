@@ -58,7 +58,6 @@ export async function compile(options) {
         );
         const del = proxy.delete;
         proxy.delete = () => {
-          console.log("proxy delete");
           vars.forEach((v) => v.delete());
           return del.apply(proxy, []);
         };
@@ -84,11 +83,6 @@ export async function compile(options) {
   for (const imp of imports) {
     await imp();
   }
-
-  variables.forEach((variable) => {
-    const del = variable.delete;
-    variable.delete = (...args) => del.apply(variable, args);
-  });
 
   return {
     module,
@@ -139,7 +133,7 @@ export function formatImportCell(cell) {
   if (injections.length) {
     chunks.push("with {", injections, "}");
   }
-  chunks.push("from", `"${encodeURIComponent(cell.source)}"`);
+  chunks.push("from", `"${(cell.source)}"`);
   return chunks.join(" ");
 
   function serialize(list = []) {
