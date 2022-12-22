@@ -1,22 +1,24 @@
 import { default as expect } from "expect.js";
-import { newCompiler, parse } from "../src/index.js";
+import { compile, parse } from "../src/index.js";
 import { Runtime } from "@observablehq/runtime";
 
-describe("compileModule", () => {
+describe("compile()", () => {
   it("should compile module cells", async () => {
     const cells = parse([
       `mutable myA = 'aa'`,
       `{ mutable myA = 'Hello, world!' }`,
     ]);
-    const compile = newCompiler({
+
+    const { module, variables } = await compile({
+      cells,
       resolve: () => {},
       runtime: new Runtime(),
       observer: () => true, // Just to be sure that all cells are evaluated
     });
-
-    const compiled = await compile(cells);
-    expect(typeof compiled).to.be("object");
-    const value = await compiled.value("myA");
+    expect(Array.isArray(variables)).to.be(true);
+    expect(variables.length).to.be(4);
+    expect(typeof module).to.be("object");
+    const value = await module.value("myA");
     expect(value).to.eql("Hello, world!");
   });
 
@@ -24,16 +26,21 @@ describe("compileModule", () => {
     const cells = parse([
       `mycell = { return { message: "Hello", context : this } }`,
     ]);
-    const compile = newCompiler({
+    
+    const context = { message : "World" }
+    const { module, variables } = await compile({
+      cells,
+      cells,
       resolve: () => {},
       runtime: new Runtime(),
       observer: () => true, // Just to be sure that all cells are evaluated
+      compileCell : ({ cell }) => {
+        let method = new Function(`"use strict"\nreturn (${cell.code})`)();
+        return (...args) => method.apply(context, args);
+      }
     });
-
-    const context = { message : "World" }
-    const compiled = await compile(cells, ({ method, args }) => method.call(context, args));
-    expect(typeof compiled).to.be("object");
-    const value = await compiled.value("mycell");
+    expect(typeof module).to.be("object");
+    const value = await module.value("mycell");
     expect(value).to.eql({
       message: "Hello",
       context
@@ -51,16 +58,19 @@ describe("compileModule", () => {
         }
       }`,
     ]);
-    const compile = newCompiler({
+    const context = { message : "ABC" }
+    const { module, variables } = await compile({
+      cells,
       resolve: () => {},
       runtime: new Runtime(),
       observer: () => true, // Just to be sure that all cells are evaluated
+      compileCell : ({ cell }) => {
+        let method = new Function(`"use strict"\nreturn (${cell.code})`)();
+        return (...args) => method.apply(context, args);
+      }
     });
-
-    const context = { message : "ABC" }
-    const compiled = await compile(cells, ({ method, args }) => method.call(context, args));
-    expect(typeof compiled).to.be("object");
-    const value = await compiled.value("mycell");
+    expect(typeof module).to.be("object");
+    const value = await module.value("mycell");
     expect(value).to.eql({
       context,
       xContext : undefined

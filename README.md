@@ -8,7 +8,7 @@ Code processing works in two steps. At first step ("parsing") text code is trans
 Methods defined in this module:
 
 * `parse(code, options)` - parses individual ObservableHQ cells and returns a list of sources for JavaScript functions with associated information (name, dependencies etc); this list can be easily serialized and used later without access to the Observable parser
-* `newCompiler(cells,call)` - returns a function transforming compiled code to an ObservableHQ runtime module
+* `compile({ cells, runtime, observer, module? })` - returns an object with Observable runtime module and variables
 
 ## `parse(code, options)`
 
@@ -22,7 +22,8 @@ Parameters:
 This method returns compiled cells in the following format: 
 `{ type : "import" | "cell", ... }`
 
-`import` cells have the following fields:
+**`import` items:**
+
 * `type="import"`
 * `source` - source of the import
 * `specifiers` - list of imported variables
@@ -33,8 +34,7 @@ Each entry in the `imported` or `injected` arrays has the following structure:
 * `alias` - name of the imported variable in this module; it "overloads" the name for the imported variables
 Very often the `name` and `alias` are the same which means that cells in the local and imported modules have the same name.
 
-
-`cell` items have the following fields:
+**`cell` items:**
 * `type="cell"`
 * `name` - name of the cell (variable); example: `viewof ${name}`
 * `references` - list of variables used in this cells; these variables should be provided by the runtime; it could be other cells from this notebook or global variables
@@ -81,54 +81,61 @@ const cells = parse(sources);
 ]
 ```
 
-## `newCompiler(options) / compile(cells, call)`
+## `compile({ cells, runtime, observer, module?, })`
 
-Returns a new async function compiling cells to ObservableHQ runtime modules.
+This method compiles the specified set of cells to a module and returns an object containing the ObservableHQ module and a list of variables.
 
 Parameters:
-* `options` - list of options used to compile cells
-* `options.runtime` - mandatory [ObservableHQ Runtime](https://github.com/observablehq/runtime#Runtime) instance
-* `options.observer` - mandatory [ObservableHQ Observer](https://github.com/observablehq/runtime#observers) instance controlling how cells execution results interact with the context (with the host notebooks)
-* `options.resolve` - an async method instantiating imported modules; this method recieves the following parameters: 
-  - `source` - reference to the imported module
-  - `runtime` - the current [ObservableHQ Runtime](https://github.com/observablehq/runtime#Runtime)
-  - `observer` - the current [ObservableHQ Observer](https://github.com/observablehq/runtime#observers) function 
-* `options.module` - optional [ObservableHQ Module](https://github.com/observablehq/runtime#modules) instance where cells defintions should be added; if this variable is not defined then this method creates a default module
+ * `options` - contains methods used by this function
+ * `options.cells` - list of serialized ObservableHQ cells returned by the `parse` method
+ * `options.runtime` - the [ObservableHQ Runtime](https://github.com/observablehq/runtime#Runtime) used to create modules and variables
+ * `options.observer` - the [ObservableHQ Observer](https://github.com/observablehq/runtime#observers) function returning instances tracking the lifecycle of individual variables (should contain "pending"/"fulfilled"/"rejected" methods)
+ * `options.module` [optional] - an [ObservableHQ Module](https://github.com/observablehq/runtime#modules) instance containing the returned variables; if this parameter is not defined then this method will create a new module
+ * `options.resolve` [optional] - this async method should resolve the specified import and return the corresponding ObservableHQ Module; default function: {@link #resolveImportSource}
+ * `options.compileCell` [optional] - this function compiles the code of the given cell; by default it is the {@link #compileCellCode} function
+ * `options.formatImport` [optional] - this method formats the specified import cell to visualize import in the main module; by default it uses the {@link #formatImportCell} method.
 
+ This method returns a `Promise` resolving to an object with the following fields:
+ * "variables" - list of [ObservableHQ Variable](https://github.com/observablehq/runtime#variables) instances
+ * "module" - [ObservableHQ Module](https://github.com/observablehq/runtime#modules) used to create variables; if the "module" parameter for this function was defined then it is the same instance
 
-The `newCompiler(...)` method returns a function allowing to transform code cells to ready-to-use [ObservableHQ Modules](https://github.com/observablehq/runtime#modules).
-
-It accepts two parameters:
-* `cells`  - list of cells as it was returned by the `parse` method ("import" and "cell" elements)
-* `callCell` - an optional method used to invoke the cell function; it can be used to re-define the context object for cells (redefine 'this'); it recieves an object with the following fields:
-  - `method` - the cell method to call
-  - `args` - cell parameters 
-  - `cell` - the cell definition 
-  - `module` - the current ObservableHQ Module
-  - `runtime` - the current ObservableHQ Runtime instance
-  - `variable` - the current ObservableHQ Variable 
-
-Returns a resolved ready-to-use [ObservableHQ Module](https://github.com/observablehq/runtime#modules).
 
 ```js
+import { Runtime, Inspector } from "@observablehq/parser";
+import { parse, compile, resolveImportSource, compileCellCode } from "@statewalker/parse-observable";
 
 // This method is responsible for calling individual cell methods.
 // It can re-define the context ('this') of these methods.
-const callCell = ({ method, args, }) => method.call(this, args);
+const cells = parse([`...code source...`]);
+const observer = (name) => {
+  let elm = document.querySelector('#' + name);
+  if (!elm) {
+    elm = document.createElement("div");
+    document.body.appendChild(elm);
+  }
+  return new Inspector(elm);
+}; 
+const { module, variables } = await compile({
+  cells,                          // Parsed cells
+  observer,                       // Observer attaching cells to DOM
+  runtime: new Runtime(),         // ObservableHQ Runtime 
+  compileCell : compileCellCode   // Cells code compiler; Default value
+  resolve: resolveImportSource,   // Import of external notebooks; Default value
+});
 
-const compile = newCompiler({
-  resolve : async ({ source, runtime, obsever }) => {  // Resolve imported modules
-    // Read cells of the imported module somewhere
-    const cells = await loadCells(source); 
-    // Transform cells of the imported module to an ObservableHQ module
-    return await compile(cells, callCell);
-  },
-  runtime: new Runtime(new Library),
-  observer: new Inspector(document.querySelector("#hello")), 
-})
+...
+```
 
-const cells = ...
-const module = await compile(cells, callCell);
+The `compileCell` parameter allows to re-define the default execution context for cells:
+
+```js
+
+const context = { ... };
+const compileCell = ({ cell }) => {
+  let method = new Function(`"use strict"\nreturn (${cell.code})`)();
+  return (...args) => method.apply(context, args);
+};
+
 ```
 
 
@@ -141,15 +148,18 @@ const cells = parse([
   `mutable myA = 'aa'`,
   `{ mutable myA = 'Hello, world!' }`,
 ]);
-const compile = newCompiler({
+const context = { };
+const { variables, module } = compile({
+  cells,
   resolve: () => {},
   runtime: new Runtime(),
   observer: () => true, // Just to be sure that all cells are evaluated
+  compileCell : ({ cell }) => {
+    let method = new Function(`"use strict"\nreturn (${cell.code})`)();
+    return (...args) => method.apply(context, args);
+  },
 });
-const context = {};
-const compiled = await compile(cells);
 const value = await compiled.value("myA");
 console.log(value);
 // Output: "Hello, world!"
-
 ```
