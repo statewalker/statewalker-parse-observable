@@ -9,14 +9,14 @@
  * @param {object} options.observer - the [ObservableHQ Observer](https://github.com/observablehq/runtime#observers)
  * function returning instances tracking the lifecycle of individual variables
  * (should contain "pending"/"fulfilled"/"rejected" methods)
- * @param {Function} options.module [optional] - an [ObservableHQ Module](https://github.com/observablehq/runtime#modules)
+ * @param {Function} options.module [optional] - an [ObservableHQ Module](https://github.com/observablehq/runtime#modules)
  * instance containing the returned variables; if this parameter is not defined then
  * this method will create a new module
- * @param {AsyncFunction} options.resolve [optional] - this method should resolve the specified import
+ * @param {AsyncFunction} options.resolve [optional] - this method should resolve the specified import
  * and return the corresponding ObservableHQ Module; default function: {@link #resolveImportSource}
  * @param {Function} options.compileCell [optional] - this function compiles the code of the given cell;
  * by default it is the {@link #compileCellCode} function
- * @param {Function} options.formatImport [optional] - this method formats the specified
+ * @param {Function} options.formatImport [optional] - this method formats the specified
  * import cell to visualize import in the main module; by default it uses the {@link #formatImportCell} method.
  * @return {Promise<object>} a promise to an object containing the following fields:
  * * "variables" - list of [ObservableHQ Variable](https://github.com/observablehq/runtime#variables) instances
