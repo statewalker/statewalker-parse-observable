@@ -1,5 +1,11 @@
 # @statewalker/parse-observable
 
+## 0.3.0
+
+### Minor Changes
+
+- Re-implement cells compilation and modules loading.
+
 ## 0.2.0
 
 ### Minor Changes
