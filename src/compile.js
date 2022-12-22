@@ -3,7 +3,7 @@
  * an object containing the ObservableHQ module and a list of variables
  *
  * @param {object} options - contains methods used by this function
- * @param {Array<Cell>} options.cells - list of serialized ObservableHQ cells returned by the `parse` method
+ * @param {Array<object>} options.cells - list of serialized ObservableHQ cells returned by the `parse` method
  * @param {object} options.runtime - the [ObservableHQ Runtime](https://github.com/observablehq/runtime#Runtime)
  * used to create modules and variables
  * @param {object} options.observer - the [ObservableHQ Observer](https://github.com/observablehq/runtime#observers)
@@ -26,6 +26,10 @@
 export async function compile(options) {
   const cells = options.cells;
   const observer = options.observer;
+  const runtime = options.runtime;
+  if (!runtime) throw new Error(`The ObservableHQ Runtime parameter is not defined.`);
+  if (!cells || !Array.isArray(cells)) throw new Error(`Cells are not defined.`);
+  if (!observer) throw new Error(`Observer function is not defined.`);
   const resolve = options.resolve || resolveImportSource;
   const formatImport = options.formatImport || formatImportCell;
   const compileCell = options.compileCell || compileCellCode;
