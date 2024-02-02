@@ -25,16 +25,16 @@
     "default": "./src/index.js"
   },
   "dependencies": {
-    "@observablehq/parser": "^6.0",
-    "acorn-walk": "^8.2.0"
+    "@observablehq/parser": "^6.1.0",
+    "acorn-walk": "^8.3.2"
   },
   "devDependencies": {
-    "@observablehq/runtime": "^5.4.3",
+    "@observablehq/runtime": "^5.9.7",
     "@statewalker/rollup": "^0.1.6",
-    "eslint": "^8",
-    "expect.js": "^0.3",
-    "mocha": "^10",
-    "rollup": "^3"
+    "eslint": "^8.56.0",
+    "expect.js": "^0.3.1",
+    "mocha": "^10.2.0",
+    "rollup": "^4.9.6"
   },
   "repository": {
     "type": "git",
